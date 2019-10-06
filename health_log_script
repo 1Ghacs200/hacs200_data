@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Proxmox
+data_and_time="$(date)"
+RAM="$(free -m | awk 'NR == 2 {print $7}')"
+diskSpace="$(df -m | awk 'NR == 10 {printf $4}')"
+sysLoad="$(/usr/bin/uptime | awk '{print $10}' | sed 's/,/\ /')"
+RXBytes=$(/sbin/ifconfig enp4s2 | awk '/RX packets/ {print $5}')
+TXBytes=$(/sbin/ifconfig enp4s2 | awk '/TX packets/ {print %5}')
+RXKB=$(( $RXBytes/1024 ))
+TXKB=$(( $TXBytes/1024 ))
+TotalKB=$(( $RXKB+$TXKB ))
+if [ $TotalKB -lt 1 ]
+then
+	TotalKB=0
+fi
+
+# Container 101
+c101_RAM=$(/usr/sbin/pct exec 101 /usr/bin/free | awk '/Mem:/ {print $7}')
+c101_diskSpace=$(/usr/sbin/pct exec 101 /bin/df | tail -n 8 | awk 'BEGIN {total=0} {total+=$4} END {print total}')
+c101_sysLoad=$(usr/sbin.pct exec 101 /usr/bin/uptime | awk '{print $10}' | sed 's/,/\ /')
+c101_RXBytes="$(/usr/sbin/pct exec 101 /sbin/ifconfig eth0| awk '/RX bytes/ {print $2}' | cut -c 7-)"
+c101_TXBytes="$(/usr/sbin/pct exec 101 /sbin/ifconfig eth0 | awk '/TX bytes/ {print $6}' | cut -c 7-)"
+c101_RXKB=$(( $101_RXBytes/1024 ))
+c101_TXKB=$(( $101_TXBytes/1024 ))
+c101_TotalKB=$(( $101_RXKB+$101_TXKB ))
+if [ $c101_TotalKB -lt 1 ]
+then
+	c101_TotalKB=0
+fi
+
+# Container 102
+c102_RAM=$(/usr/sbin/pct exec 102 /usr/bin/free | awk '/Mem:/ {print $7}')
+c102_diskSpace=$(/usr/sbin/pct exec 102 /bin/df | tail -n 8 | awk 'BEGIN {total=0} {total+=$4} END {print total}')
+c102_sysLoad=$(usr/sbin.pct exec 102 /usr/bin/uptime | awk '{print $10}' | sed 's/,/\ /')
+c102_RXBytes="$(/usr/sbin/pct exec 102 /sbin/ifconfig eth0| awk '/RX bytes/ {print $2}' | cut -c 7-)"
+c102_TXBytes="$(/usr/sbin/pct exec 102 /sbin/ifconfig eth0 | awk '/TX bytes/ {print $6}' | cut -c 7-)"
+c102_RXKB=$(( $102_RXBytes/1024 ))
+c102_TXKB=$(( $102_TXBytes/1024 ))
+c102_TotalKB=$(( $102_RXKB+$102_TXKB ))
+if [ $c102_TotalKB -lt 1 ]
+then
+	c102_TotalKB=0
+fi
+
+# Container 103
+c103_RAM=$(/usr/sbin/pct exec 103 /usr/bin/free | awk '/Mem:/ {print $7}')
+c103_diskSpace=$(/usr/sbin/pct exec 103 /bin/df | tail -n 8 | awk 'BEGIN {total=0} {total+=$4} END {print total}')
+c103_sysLoad=$(usr/sbin.pct exec 103 /usr/bin/uptime | awk '{print $10}' | sed 's/,/\ /')
+c103_RXBytes="$(/usr/sbin/pct exec 103 /sbin/ifconfig eth0| awk '/RX bytes/ {print $2}' | cut -c 7-)"
+c103_TXBytes="$(/usr/sbin/pct exec 103 /sbin/ifconfig eth0 | awk '/TX bytes/ {print $6}' | cut -c 7-)"
+c103_RXKB=$(( $103_RXBytes/1024 ))
+c103_TXKB=$(( $103_TXBytes/1024 ))
+c103_TotalKB=$(( $103_RXKB+$103_TXKB ))
+if [ $c103_TotalKB -lt 1 ]
+then
+	c103_TotalKB=0
+fi
+
+# Container 104
+c104_RAM=$(/usr/sbin/pct exec 104 /usr/bin/free | awk '/Mem:/ {print $7}')
+c104_diskSpace=$(/usr/sbin/pct exec 104 /bin/df | tail -n 8 | awk 'BEGIN {total=0} {total+=$4} END {print total}')
+c104_sysLoad=$(usr/sbin.pct exec 104 /usr/bin/uptime | awk '{print $10}' | sed 's/,/\ /')
+c104_RXBytes="$(/usr/sbin/pct exec 104 /sbin/ifconfig eth0| awk '/RX bytes/ {print $2}' | cut -c 7-)"
+c104_TXBytes="$(/usr/sbin/pct exec 104 /sbin/ifconfig eth0 | awk '/TX bytes/ {print $6}' | cut -c 7-)"
+c104_RXKB=$(( $104_RXBytes/1024 ))
+c104_TXKB=$(( $104_TXBytes/1024 ))
+c104_TotalKB=$(( $104_RXKB+$104_TXKB ))
+if [ $c104_TotalKB -lt 1 ]
+then
+	c104_TotalKB=0
+fi
+
+# Logging
+log -k ~/ref.json -s https://docs.google.com/spreadsheets/d/1dwyRNGfEMRtv8UcNhR-cbYaBhBeqchz-R4mcD--mdyY/edit#gid=0 -d "$date_and_time, $RAM, $diskSpace, $sysLoad, $RXBytes, $TXBytes, $RXKB, $TXKB, $TotalKB, $c101_RAM, $c101_diskSpace, $c101_sysLoad, $c101_RXBytes, $c101_TXBytes, $c101_RXKB, $c101_TXKB,$c101_TotalKB, $c102_RAM, $c102_diskSpace, $c102_sysLoad, $c102_RXBytes, $c102_TXBytes, $c102_RXKB, $c102_TXKB, $c102_TotalKB, $c103_RAM, $c103_diskSpace, $c103_sysLoad, $c103_RXBytes, $c103_TXBytes, $c103_RXKB, $c103_TXKB, $c103_TotalKB, $c104_RAM, $c104_diskSpace, $c104_sysLoad, $c104_RXBytes, $c104_TXBytes, $c104_RXKB, $c104_TXKB, $c104_TotalKB"

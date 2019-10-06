@@ -1,0 +1,33 @@
+#!/bin/bash
+
+CID=102
+CONTAINER_IP=172.20.0.3
+GATEWAY=172.20.0.1
+TEMPLATE_ENGLISH=/var/lib/vz/dump/english_system.tar
+TEMPLATE_HASH=/var/lib/vz/dump/hashed_system.tar
+
+killall node
+killall set_up_$CID
+
+pct stop $CID
+pct unmount $CID
+
+echo PLEASE STOP
+umount -l /dev/pve/vm-$CID-disk-1
+
+pct destroy $CID
+if [ $(( $RANDOM % 2 )) -eq 0 ]
+then
+pct create $CID $TEMPLATE_ENGLISH --storage local-lvm --net0 name=eth0,bridge=vmbr0,ip=$CONTAINER_IP/16,gw=$GATEWAY --onboot 1 --nameserver 1.1.1.1 --searchdomain umd.edu --core 1 --cpulimit 0.5 --swap 0 --memory 512
+else
+pct create $CID $TEMPLATE_HASH --storage local-lvm --net0 name=eth0,bridge=vmbr0,ip=$CONTAINER_IP/16,gw=$GATEWAY --onboot 1 --nameserver 1.1.1.1 --searchdomain umd.edu --core 1 --cpulimit 0.5 --swap 0 --memory 512
+fi
+pct start $CID
+pct mount $CID
+sed -i "s/PermitRootLogin prohibit-password/PermitRootLogin yes/" /var/lib/lxc/$CID/rootfs/etc/ssh/sshd_config
+echo  "root:proxmoxContainer@ACES" | pct exec $CID chpasswd
+
+pct exec $CID -- service ssh restart
+
+nohup ~/set_up_$CID >> ~/output_$CID &
+

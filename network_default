@@ -1,0 +1,28 @@
+auto lo
+iface lo inet loopback
+
+auto enp4s1
+iface enp4s1 inet manual
+
+auto vmbr0
+iface vmbr0 inet static
+	address 172.20.0.1
+	netmask 255.255.0.0
+	bridge_ports none
+	bridge_stp off
+	bridge_fd 0
+	post-up echo 1 > /proc/sys/net/ipv4/ip_forward
+
+auto enp4s2
+iface enp4s2 inet dhcp
+
+auto enp4s3
+iface enp4s3 inet static
+	address 10.1.0.1
+	netmask 255.255.0.0
+
+auto enp4s4
+iface enp4s4 inet static
+	address 10.2.0.1
+	netmask 255.255.0.0
+

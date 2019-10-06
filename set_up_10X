@@ -1,0 +1,64 @@
+#!/bin/bash
+SECONDS=0
+CID=102
+CONTAINER_IP=172.20.0.3
+GATEWAY=172.20.0.1
+DESTINATION_PORT=10000
+
+pct start $CID
+pct unmount $CID
+pct mount $CID
+
+node /root/MITM/mitm/index.js HACS200_1G $DESTINATION_PORT $CONTAINER_IP $CID true mitm_$CID.js &
+
+echo "TMOUT=1800" >> /var/lib/lxc/$CID/rootfs/root/.bashrc
+
+final_srcip="uninitialized"
+connected=0
+ssh_count=0
+tail --pid=$$ -F /var/lib/lxc/$CID/rootfs/var/log/auth.log | while read a
+do
+	temp_srcip=`echo "$a" | awk -F" " '$6 == "Accepted" {print $11}'`
+	if [ "$temp_srcip" != "" ] && [ $connected -eq 0 ]
+	then
+		final_srcip="$temp_srcip"
+		connected=1
+		echo "FOUND SRCIP" $final_srcip
+		echo "AllowUsers root@$final_srcip" >> /var/lib/lxc/$CID/rootfs/etc/ssh/sshd_config
+		sleep 3
+		#tail -n 1 /root/data/logins/$CID.txt | awk -F';' '{print $2}' > ~/srcip_$CID
+		#actual_srcip=`cat ~/srcip_$CID`
+		actual_srcip=$(tail -n 1 /root/data/logins/$CID.txt | awk -F';' '{print $2}')
+		iptables --table filter --insert INPUT 1 -s 0.0.0.0/0 -d $GATEWAY --protocol tcp --destination-port $DESTINATION_PORT --jump DROP
+		iptables --table filter --insert INPUT 1 -s $actual_srcip -d $GATEWAY --protocol tcp --destination-port $DESTINATION_PORT --jump ACCEPT
+	fi
+
+	if [ "$temp_srcip" = "$final_srcip" ]
+	then
+		ssh_count=$(( $ssh_count + 1 ))
+		echo $ssh_count
+	fi
+
+  count=`grep "pam_unix(sshd:session): session closed" <<< "$a" | wc -l`
+  echo CONTAINS PAM_UNIX: $count
+  if [ $count -eq 1 ]
+	then
+
+		ssh_count=$(( $ssh_count - 1 ))
+		echo $ssh_count
+		echo $discon_ip
+		if [ $ssh_count -eq 0 ]
+		then
+			echo CHANGE
+			iptables --table filter --delete INPUT -s 0.0.0.0/0 -d $GATEWAY --protocol tcp --destination-port $DESTINATION_PORT --jump DROP
+			iptables --table filter --delete INPUT -s $srcip -d $GATEWAY --protocol tcp --destination-port $DESTINATION_PORT --jump ACCEPT
+			iptables --table filter --insert INPUT 1 -s $srcip -d $GATEWAY --protocol tcp --destination-port 10000 --jump DROP
+                        iptables --table filter --insert INPUT 1 -s $srcip -d $GATEWAY --protocol tcp --destination-port 10001 --jump DROP
+                        iptables --table filter --insert INPUT 1 -s $srcip -d $GATEWAY --protocol tcp --destination-port 10002 --jump DROP
+                        iptables --table filter --insert INPUT 1 -s $srcip -d $GATEWAY --protocol tcp --destination-port 10003 --jump DROP
+			echo $srcip >> /root/ip_blacklist
+			echo "STARTING DESTRUCTION, SLEEP OVER"
+			nohup ~/clean_up_$CID &
+		fi
+	fi
+done

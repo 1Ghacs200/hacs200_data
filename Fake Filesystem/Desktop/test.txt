@@ -1,0 +1,37 @@
+" , _
+
+" When a new item is added to the inventory, display an alert to the user.
+
+By default, addToIsEmpty is false.
+
+If this is false, use the value of the option to force empty items to be displayed.
+
+This option will have to be set in the script and will be used as is. The options
+
+" , {
+
+_ , " getItem " , " item " , " list "
+
+}
+
+}], " isDefaultOption " : " isDefaultOption " , " isUnlistedOption " : " isUnlistedOption "
+
+},
+
+{
+
+" type " : " feature " ,
+
+" label " : " Unlisted " ,
+
+" longdesc " : " To display a message when unlisted, use addItem in the inventory.
+
+This option will have to be set in the script and will be used as is. The options
+
+" , {
+
+_ , " getItem " , " item " , " list "
+
+}
+
+}], " isDefaultOption " : " isDefaultOption "
