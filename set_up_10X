@@ -1,17 +1,16 @@
 #!/bin/bash
-SECONDS=0
-CID=102
-CONTAINER_IP=172.20.0.3
-GATEWAY=172.20.0.1
-DESTINATION_PORT=10000
+CID=$1
+CONTAINER_IP=$2
+GATEWAY="172.20.0.1"
+DESTINATION_PORT=$3
 
 pct start $CID
 pct unmount $CID
 pct mount $CID
 
-node /root/MITM/mitm/index.js HACS200_1G $DESTINATION_PORT $CONTAINER_IP $CID true mitm_$CID.js &
+nohup node /root/MITM/mitm/index.js HACS200_1G $DESTINATION_PORT $CONTAINER_IP $CID true mitm_$CID.js >> MITM_output_$CID 2>&1 &
 
-echo "TMOUT=1800" >> /var/lib/lxc/$CID/rootfs/root/.bashrc
+NODE_ID=$!
 
 final_srcip="uninitialized"
 connected=0
@@ -28,7 +27,7 @@ do
 		sleep 3
 		#tail -n 1 /root/data/logins/$CID.txt | awk -F';' '{print $2}' > ~/srcip_$CID
 		#actual_srcip=`cat ~/srcip_$CID`
-		actual_srcip=$(tail -n 1 /root/data/logins/$CID.txt | awk -F';' '{print $2}')
+		actual_srcip=$(tail -n 1 /root/MITM_data/logins/$CID.txt | awk -F';' '{print $2}')
 		iptables --table filter --insert INPUT 1 -s 0.0.0.0/0 -d $GATEWAY --protocol tcp --destination-port $DESTINATION_PORT --jump DROP
 		iptables --table filter --insert INPUT 1 -s $actual_srcip -d $GATEWAY --protocol tcp --destination-port $DESTINATION_PORT --jump ACCEPT
 	fi
@@ -51,14 +50,12 @@ do
 		then
 			echo CHANGE
 			iptables --table filter --delete INPUT -s 0.0.0.0/0 -d $GATEWAY --protocol tcp --destination-port $DESTINATION_PORT --jump DROP
-			iptables --table filter --delete INPUT -s $srcip -d $GATEWAY --protocol tcp --destination-port $DESTINATION_PORT --jump ACCEPT
-			iptables --table filter --insert INPUT 1 -s $srcip -d $GATEWAY --protocol tcp --destination-port 10000 --jump DROP
-                        iptables --table filter --insert INPUT 1 -s $srcip -d $GATEWAY --protocol tcp --destination-port 10001 --jump DROP
-                        iptables --table filter --insert INPUT 1 -s $srcip -d $GATEWAY --protocol tcp --destination-port 10002 --jump DROP
-                        iptables --table filter --insert INPUT 1 -s $srcip -d $GATEWAY --protocol tcp --destination-port 10003 --jump DROP
-			echo $srcip >> /root/ip_blacklist
-			echo "STARTING DESTRUCTION, SLEEP OVER"
-			nohup ~/clean_up_$CID &
+			iptables --table filter --delete INPUT -s $actual_srcip -d $GATEWAY --protocol tcp --destination-port $DESTINATION_PORT --jump ACCEPT
+			iptables --table filter --insert INPUT 1 -s $actual_srcip --protocol tcp --jump DROP
+			echo $actual_srcip
+			echo $actual_srcip >> /root/ip_blacklist
+			echo "STARTING DESTRUCTION"
+			nohup ~/clean_up_10X $1 $2 $NODE_ID $3 &
 		fi
 	fi
 done

@@ -1,12 +1,16 @@
 #!/bin/bash
 
-CID=102
-CONTAINER_IP=172.20.0.3
+CID=$1
+CONTAINER_IP=$2
 GATEWAY=172.20.0.1
-TEMPLATE_ENGLISH=/var/lib/vz/dump/english_system.tar
-TEMPLATE_HASH=/var/lib/vz/dump/hashed_system.tar
+TEMPLATE_ENGLISH=/var/lib/vz/dump/english_all_system.tar
+TEMPLATE_HASH=/var/lib/vz/dump/hashed_all_system.tar
 
-killall node
+if [ $3 -ne 0 ]
+then
+kill -9 $3
+fi
+
 killall set_up_$CID
 
 pct stop $CID
@@ -26,8 +30,9 @@ pct start $CID
 pct mount $CID
 sed -i "s/PermitRootLogin prohibit-password/PermitRootLogin yes/" /var/lib/lxc/$CID/rootfs/etc/ssh/sshd_config
 echo  "root:proxmoxContainer@ACES" | pct exec $CID chpasswd
+echo "TMOUT=1800" >> /var/lib/lxc/$CID/rootfs/etc/bash.bashrc
 
 pct exec $CID -- service ssh restart
 
-nohup ~/set_up_$CID >> ~/output_$CID &
+nohup ~/set_up_10X $1 $2 $4 >> ~/output_$CID &
 
