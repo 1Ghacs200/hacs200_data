@@ -1,6 +1,0 @@
-nohup: ignoring input
-2019-10-06 18:20:00.448 - [Info] MITM Version: 1.26
-2019-10-06 18:20:00.464 - [Info] Auto Access Enabled: true
-2019-10-06 18:20:00.465 - [Debug] [Init] Auto Access Barrier: true
-2019-10-06 18:20:00.648 - [Info] SSH man-in-the-middle server for 172.20.0.2 listening on 0.0.0.0:10000
-2019-10-06 18:20:00.703 - [Debug] Your session ID: 92
